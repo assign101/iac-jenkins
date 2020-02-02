@@ -1,0 +1,9 @@
+jenkins_instance_name: jenkins
+vpc_subnet_id: subnet-1f5d8a78
+vpc_id: vpc-06bcbf62
+security_groups: sg-06c96d43ef1532779
+subnet_a: subnet-1f5d8a78
+subnet_b: subnet-cda38b94
+subnet_c: subnet-a7c107ee
+opendev_private_key: ~/.emirates/ec2-admin.pem
+

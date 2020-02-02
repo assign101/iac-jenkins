@@ -1,0 +1,231 @@
+---
+- hosts: localhost
+  connection: local
+  tasks:
+  - name: Create EC2 Instance
+    ec2:
+      region: ap-southeast-2
+      key_name: ec2-admin
+      instance_type: t3.large
+      image: ami-0dc96254d5535925f
+      group_id: "{{ security_groups }}"
+      wait: yes
+      wait_timeout: 500
+      instance_tags:
+        Name: "{{ jenkins_instance_name }}" 
+      volumes:
+        - device_name: /dev/xvda
+          volume_size: 50
+          volume_type: gp2
+          delete_on_termination: yes
+        - device_name: /dev/xvdb
+          volume_size: 100
+          volume_type: gp2
+      vpc_subnet_id: "{{ vpc_subnet_id }}"
+      assign_public_ip: yes
+    register: ec2 
+
+  - name: Add instance public IP to host group
+    add_host: hostname={{ item.public_ip }} groupname=launched ansible_ssh_private_key_file="{{ opendev_private_key }}" 
+    with_items: "{{ ec2.instances }}"
+
+  - name: Wait for SSH to come up
+    wait_for: host={{ item.public_ip }} port=22 delay=90 timeout=320 state=started
+    with_items: "{{ ec2.instances }}"
+
+  - name: accept new ssh fingerprints
+    shell: ssh-keyscan -H {{ item.public_ip }} >> ~/.ssh/known_hosts
+    with_items: "{{ ec2.instances }}"
+
+  - name: Create Target Group 
+    elb_target_group:
+      name: "{{ jenkins_instance_name }}"
+      protocol: http
+      port: 80
+      vpc_id: "{{ vpc_id }}"
+      health_check_path: /login
+      health_check_protocol: http
+      successful_response_codes: "200"
+      target_type: instance
+      targets:
+        - Id:  "{{ ec2.instances[0].id }}"
+          Port: 8080
+      state: present
+      wait_timeout: 200
+
+  - name: Jenkins URL
+    debug:
+      msg: "{{ jenkins_instance_name }}.opendev.engineering"
+
+- name: Add instance to group
+  hosts: launched
+  user: ec2-user
+  become: yes
+  become_method: sudo
+  become_user: root
+  gather_facts: True
+  tasks:
+    - name: upgrade all packages
+      yum: name=* state=latest
+
+    - name: Check for reboot hint.
+      shell: LAST_KERNEL=$(rpm -q --last kernel | awk 'NR==1{sub(/kernel-/,""); print $1}'); CURRENT_KERNEL=$(uname -r); if [ $LAST_KERNEL != $CURRENT_KERNEL ]; then echo 'reboot'; else echo 'no'; fi
+      ignore_errors: true
+      register: reboot_hint
+
+    - name: Rebooting ...
+      shell: "sleep 5 && sudo shutdown -r now"
+      async: 1
+      poll: 0
+
+    - name: Wait for the reboot to complete if there was a change.
+      wait_for_connection:
+        connect_timeout: 120
+        sleep: 5
+        delay: 5
+        timeout: 300
+    - name: install docker 
+      yum: name=docker state=present
+
+    - name: install java 
+      yum: name=java state=present
+
+    - name: install python-pip 
+      yum: name=python-pip state=present
+
+    - name: install certain python modules for docker
+      pip:
+        name: "docker"
+        state: present
+
+    - name: enable service docker
+      systemd:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: format the xvdb
+      filesystem:
+        fstype: xfs
+        dev: /dev/xvdb
+
+    - name: mount the xvdb
+      mount:
+        fstype: xfs
+        src: /dev/xvdb
+        path: /var/jenkins_home
+        state: mounted
+
+    - name: Recursively change ownership of a directory
+      file:
+        path: /var/jenkins_home
+        state: directory
+        recurse: yes
+        owner: "1000"
+        group: "1000"
+
+    - name: Copy files for custom Jenkins Docker image building
+      copy:
+        src: '{{item}}'
+        dest: './{{item}}'
+      loop:
+        - Dockerfile
+        - plugins.txt
+        - default-user.groovy
+        - config-maven.groovy
+
+    - name: Build the custom Jenkins Docker image
+      docker_image:
+        path: ./
+        name: custom/jenkins
+        tag: "latest"
+
+    - name: Create a container from the jenkins docker image
+      docker_container:
+        name: "jenkins-server"
+        image: "custom/jenkins:latest"
+        ports:
+            - "8080:8080"
+            - "50000:50000"
+        volumes:
+            - "/var/jenkins_home:/var/jenkins_home"
+            - "/var/run/docker.sock:/var/run/docker.sock"
+        state: started
+        user: root
+        recreate: no
+        detach: yes
+
+    - name: Copy systemd service script to start and stop the jenkins container
+      copy: src=files/jenkins.service dest=/etc/systemd/system
+
+    - name: Systemctl daemon reload
+      shell: systemctl daemon-reload
+
+    - name: Reload systemctl
+      shell: systemctl restart jenkins
+
+    - name: Enable the docker-jenkins service
+      shell: systemctl enable jenkins
+
+    - name: Sleep to make start jenkins porperly
+      shell: sleep 90
+
+    - name: Copy files for custom Jenkins Docker image building
+      copy:
+        src: '{{item}}'
+        dest: '/var/tmp/{{item}}'
+      loop:
+        - jenkins_users.txt
+        - create_jenkins_users.sh
+        - add_node.sh
+
+
+    - name: Copy jenkins secret configuration
+      copy: src=files/jenkins_secret.tar dest=/var/jenkins_home
+
+    - name: Copy jenkins config.xml
+      copy: src=files/config.xml dest=/var/jenkins_home
+
+
+    - name: change ownership of a jenkins create user script
+      file:
+        path: /var/tmp/create_jenkins_users.sh 
+        mode: '0755'
+
+    - name: change ownership of a jenkins add node script
+      file:
+        path: /var/tmp/add_node.sh
+        mode: '0755'
+
+    - name: Download jenkins-cli.jar
+      get_url:
+        url: http://localhost:8080/jnlpJars/jenkins-cli.jar
+        dest: /var/tmp/jenkins-cli.jar
+        mode: '0755'
+
+
+    - name: Create Jenkins Users
+      shell: /var/tmp/create_jenkins_users.sh
+
+    - name: Extract jenkins_secret.tar into /var/jenkins_home
+      unarchive:
+        src: /var/jenkins_home/jenkins_secret.tar
+        dest: /var/jenkins_home
+        remote_src: yes
+
+    - name: Add slave node for AWS
+      shell: /var/tmp/add_node.sh
+
+    - name: Recursively change ownership of a directory
+      file:
+        path: /var/jenkins_home
+        state: directory
+        owner: "1000"
+        group: "1000"
+
+    - name: Reload systemctl
+      shell: systemctl restart jenkins
+
+    - name: Admin password
+      debug:
+        msg: "default user is admin and password is welcome123, please change once you logged in"
