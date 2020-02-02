@@ -17,7 +17,7 @@ One of the main benefits of containerisation is the ability to speed up the proc
 – Programming languages and frameworks support: Kubernetes support a wide spectrum of programming languages and frameworks like Java, Go, .Net, etc. Kubernetes also has a lot of support from the development community, who maintain additional programming languages and frameworks. If an application can run in a container, it should run well on Kubernetes.
 
 
-                                        ![](/images/architecture.png)
+                                        ![](images/architecture.png)
 
 # Build Jenkins Instance as Docker in AWS
 
