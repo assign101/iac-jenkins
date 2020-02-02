@@ -18,6 +18,26 @@ One of the main benefits of containerisation is the ability to speed up the proc
 
 
                                         ![](images/architecture.png)
+                                        
+                                      
+# Key benefits of the solution:                                        
+# Impressive heritage:
+Kubernetes has a very mature and proven underlying architecture. Its design is built on over 10 years of operational experience of the Google engineers who helped build and maintain the largest container platform in the world.
+# Rich feature set and application support:
+Kubernetes has a very rich feature set compared to other container management systems. It supports a wide spectrum of workloads, programming languages and frameworks, enabling stateless, stateful, and data-processing workloads. and making Kubernetes flexible enough to meet the needs of a wide range of users and use cases.
+# Workload Scalability
+Kubernetes is known to be efficient in its use of infrastructure resources and offers several useful features for scaling 
+# purposes:
+– Horizontal infrastructure scaling: Kubernetes operates at the individual server level to implement horizontal scaling. New servers can be added or removed easily.
+– Auto-scaling: With auto-scaling you can automatically change the number of running containers, based on CPU utilisation or other application-provided metrics.
+– Manual scaling: You can manually scale the number of running containers through a command or the interface.
+– Replication controller: The Replication controller makes sure your cluster has a specified number of equivalent pods (a group of containers) running. If there are too many pods, the Replication Controller terminates the extra pods. If there are too few, it starts more pods.
+Neo Airlines container platform is built on AWS EKS(Elastic Kubernetes Service) . Amazon EKS Kubernetes is designed to tackle the availability of both applications and infrastructure, making it indispensable when deploying containers in production.
+
+# EKS Logical Architecture
+
+
+[](images/eks.png)
 
 # Build Jenkins Instance as Docker in AWS
 
