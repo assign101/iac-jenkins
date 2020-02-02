@@ -61,7 +61,9 @@ g) Create route53 entry to point new jenkins to ALB <br/>
 
 
 ## Access the jenkins 
-ansible playbook will print out the new jenkin url , new url will be "jenkins_instance_name".opendev.engineering
+ansible playbook will print out the new jenkin url , new url will be "jenkins_instance_name"
+
+
 
 ## Configure the jenkins 
 ansible playbook will print the last line as initial password to configure the jenkins 
