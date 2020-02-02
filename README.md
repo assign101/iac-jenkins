@@ -26,8 +26,7 @@ Kubernetes has a very mature and proven underlying architecture. Its design is b
 # Rich feature set and application support:
 Kubernetes has a very rich feature set compared to other container management systems. It supports a wide spectrum of workloads, programming languages and frameworks, enabling stateless, stateful, and data-processing workloads. and making Kubernetes flexible enough to meet the needs of a wide range of users and use cases.
 # Workload Scalability
-Kubernetes is known to be efficient in its use of infrastructure resources and offers several useful features for scaling 
-# purposes:
+Kubernetes is known to be efficient in its use of infrastructure resources and offers several useful features for scaling purposes:
 – Horizontal infrastructure scaling: Kubernetes operates at the individual server level to implement horizontal scaling. New servers can be added or removed easily.
 – Auto-scaling: With auto-scaling you can automatically change the number of running containers, based on CPU utilisation or other application-provided metrics.
 – Manual scaling: You can manually scale the number of running containers through a command or the interface.
@@ -35,7 +34,6 @@ Kubernetes is known to be efficient in its use of infrastructure resources and o
 Neo Airlines container platform is built on AWS EKS(Elastic Kubernetes Service) . Amazon EKS Kubernetes is designed to tackle the availability of both applications and infrastructure, making it indispensable when deploying containers in production.
 
 # EKS Logical Architecture
-
 
 [](images/eks.png)
 
