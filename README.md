@@ -1,7 +1,7 @@
   
 # Build Jenkins Instance as Docker in AWS
 
-There is requirement to build new jenkins for the new Kubernetes cluster 1.14.1
+As part of the Neo Airlines Infrastructure this repository containts the implementation of Jenkins Infrastructure Provision Ansible Scripts
 
 ## Usage 
 
@@ -28,18 +28,5 @@ ansible playbook will print out the new jenkin url , new url will be "jenkins_in
 
 ## Configure the jenkins 
 ansible playbook will print the last line as initial password to configure the jenkins 
-
-
-## Solution covers the following deliverables:
-1)	A GITHUB repo to demonstrate Infrastructure provisioning templates/files to provision Jenkins.
-         
-2)	A GITHUB repo to demonstrate Infrastructure provisioning templates/files to provision “your JAR/WAR” Application environment
-3)	Provisioned infrastructure should be well defined with proper tagging and naming conventions.
-4)	Provisioned infrastructure and deployed services should be secured and have well defined security groups and ACL’s to restrict access.
-5)	Deploy “Your JAR/WAR” file using the CI/CD pipeline to Test.
-6)	Instrumentation of CI/CD pipelines with monitoring to present number of deployments, using a presentation layer like Grafana.
-
-A High-level architecture to demonstrate how you approached the problem and your solution is required.
-Explanation of the code and working demo of Jenkins pipeline is required.
 
 
